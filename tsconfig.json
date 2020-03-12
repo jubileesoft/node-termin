@@ -10,6 +10,7 @@
       "target": "es6",
       "emitDecoratorMetadata": true,
       "moduleResolution": "node",
+      "sourceMap": true,
       "importHelpers": true,
       "types": [
         "node"
