@@ -1,7 +1,8 @@
+import mongo from 'mongodb';
 import { DbBase, DbTypes } from '../base';
 
 export interface ITenantDbUser {
-  _id: any;
+  _id: mongo.ObjectID;
   email: string;
   firstName?: string;
   lastName?: string;
@@ -16,7 +17,7 @@ export class TenantDbUser extends DbBase {
 
   constructor(tenantDbUser: ITenantDbUser) {
     super({ _id: tenantDbUser._id });
-    this._type = DbTypes.tenantDbUser;
+    this.__type = DbTypes.tenantDbUser;
 
     this.email = tenantDbUser.email;
     this.firstName = tenantDbUser.firstName;

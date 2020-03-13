@@ -3,13 +3,13 @@ import { Context, ICreateTenant } from './mongodb/context';
 
 const app = express();
 const port = process.env.PORT || 3000;
-app.get('/create/tenant', async (req, res) => {
+app.get('/admin/create/tenant/:id', async (req, res) => {
+  const dbName = req.params.id;
   const context = new Context();
 
-  const create: ICreateTenant = {
-    dbName: 'test',
+  const createTenant: ICreateTenant = {
+    dbName,
     admin: {
-      _id: 'pelu',
       email: 'peter.lustig@wdr.de',
       firstName: 'Peter',
       lastName: 'Lustig'
@@ -17,8 +17,15 @@ app.get('/create/tenant', async (req, res) => {
     name: 'Test Mandant'
   };
 
-  const adminPassword = await context.createTenantDatabase(create);
+  const adminPassword = await context.createTenantDatabase(createTenant);
   res.send('Hello world ' + adminPassword);
+});
+
+app.get('/admin/delete/tenant/:id', async (req, res) => {
+  const dbName = req.params.id;
+  const context = new Context();
+  await context.dropTenantDatabase({ dbName });
+  res.send('Ok');
 });
 
 app.listen(port, () => {

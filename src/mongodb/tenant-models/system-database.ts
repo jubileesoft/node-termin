@@ -1,7 +1,8 @@
+import mongo from 'mongodb';
 import { DbBase, DbTypes } from '../base';
 
 export interface ITenantDbSystemDatabase {
-  _id: any;
+  _id: mongo.ObjectID;
   version: string;
 }
 
@@ -10,7 +11,7 @@ export class TenantDbSystemDatabase extends DbBase {
 
   constructor(tenantDbSystemDatabase: ITenantDbSystemDatabase) {
     super({ _id: tenantDbSystemDatabase._id });
-    this._type = DbTypes.tenantDbSystemDatabase;
+    this.__type = DbTypes.tenantDbSystemDatabase;
 
     this.version = tenantDbSystemDatabase.version;
   }
