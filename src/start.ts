@@ -1,10 +1,8 @@
-import express from 'express';
-import bodyParser from 'body-parser';
+import express, { Request, Response } from 'express';
 const { ApolloServer } = require('apollo-server-express');
-import { applyMiddleware } from 'graphql-middleware';
-import middleware from './middleware'; // returns array of middelware
 
-import schema from './data/schema';
+import resolvers from './graphql/resolvers';
+import typeDefs from './graphql/typeDefs';
 
 import { Context, ICreateTenant } from './mongodb/context';
 
@@ -40,28 +38,17 @@ const app = express();
 //   //
 // });
 
-const schemaWithMiddleware = applyMiddleware(schema, ...middleware);
-
 const server = new ApolloServer({
   playground: true,
-  //typeDefs: schema,
-  //resolvers,
-  context: async ({ req, res }) => ({ req, res }), // now we can access express objects from apollo context arg
-  schema: schemaWithMiddleware, // add this property
+  typeDefs,
+  resolvers,
+  context: async (req: Request, res: Response) => {
+    console.log(req);
+    return null;
+  },
 });
 
-//const server = new ApolloServer({ schema });
-
-const path = '/graphql';
-app.use(path);
-
 server.applyMiddleware({ app });
-
-// The GraphQL endpoint
-// app.use('/graphql', bodyParser.json(), graphqlExpress({ schema }));
-
-// // GraphiQL, a visual editor for queries
-// app.use('/graphiql', graphiqlExpress({ endpointURL: '/graphql' }));
 
 // Start the server
 app.listen(3000, () => {
