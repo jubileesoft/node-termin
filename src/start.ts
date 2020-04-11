@@ -1,33 +1,7 @@
 import express, { Request, Response } from 'express';
 const { ApolloServer } = require('apollo-server-express');
 import fetch from 'node-fetch';
-
-import { OAuth2Client } from 'google-auth-library';
-const client = new OAuth2Client(
-  '472845354613-qhjjmmug094kpv9b4iu35g65aa34v4u0.apps.googleusercontent.com'
-);
-
-async function verify(token: string) {
-  const url =
-    'https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=' + token;
-
-  const response = await fetch(url, {
-    method: 'GET',
-    compress: false,
-    headers: {
-      Accept: 'application/json',
-    },
-  });
-  console.log(response.url);
-  console.log(response.body);
-  if (response.status !== 200) {
-    return null;
-  }
-  let aDS = await response.buffer();
-  //let asd = await response.text();
-  let sd = await response.json();
-  return 3;
-}
+import GoogleHandler from './google/handler';
 
 import resolvers from './graphql/resolvers';
 import typeDefs from './graphql/typeDefs';
@@ -66,18 +40,11 @@ const app = express();
 //   //
 // });
 
-// https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=ya29.a0Ae4lvC1024L7RRZWnALwKOCMu3DCpqgbMiyowmHTS8ee3LJtnXtCk0aV04D2i40F8y6j2WA1oU8DuR2H2msbDqxtig38pE-FD52fYA-_NGa_yylcwC_ODgkutqrG8NJpy0UgASdT59Ekm0SFakwP9ouSeK5NQFNDUUE
-// app.use('/graphql', (req, res, next) => {
-//   passport.authenticate('google-verifiy-token', (err, user, info) => {
-//     next();
-//   });
-// });
-
 const server = new ApolloServer({
   playground: true,
   typeDefs,
   resolvers,
-  context: async ({ req, res }) => {
+  context: async ({ req }) => {
     const notAuthenticated = { user: null };
     try {
       if (typeof req.headers.authorization !== 'string') {
@@ -85,7 +52,7 @@ const server = new ApolloServer({
       }
 
       const token = req.headers.authorization.split(' ')[1];
-      const user = await verify(token);
+      const user = await GoogleHandler.verifyAccessToken(token);
       return { user };
     } catch (e) {
       return notAuthenticated;
