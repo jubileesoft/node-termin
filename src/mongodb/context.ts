@@ -6,6 +6,7 @@ import { TenantDbSystemTenant } from './tenant-models/system-tenant';
 import { TenantDbSystemDatabase } from './tenant-models/system-database';
 import { TenantDbUser } from './tenant-models/user';
 import { AdminDbTenant, IAdminDbTenant } from './admin-models/tenant';
+import { GoogleUser } from 'src/google/object';
 
 export interface ICreateTenantUser {
   email: string;
@@ -25,18 +26,18 @@ export interface IDropTenant {
 }
 
 export class Context {
+  // #region Fields
+
+  private static config: IMongoDBConfig = MongoDBConfig;
+  private static versions: string[] = ['1.0'];
+  private static tenantDbSuffix: string = 'appo_';
+  private static adminDb: string = 'appo';
+
+  // #endregion Fields
+
   // #region Properties
 
   // #endregion Properties
-
-  // #region Fields
-
-  private config: IMongoDBConfig = MongoDBConfig;
-  private versions: string[] = ['1.0'];
-  private tenantDbSuffix: string = 'appo_';
-  private adminDb: string = 'appo';
-
-  // #endregion Fields
 
   // #region Constructor
 
@@ -48,7 +49,24 @@ export class Context {
 
   // #region Public Methods
 
-  public async createTenantDatabase(
+  public static async getAllTenants() {
+    const client = await this.getClient();
+
+    const adminDb = client.db(this.adminDb);
+    const tenantsCollection = adminDb.collection('tenants');
+
+    const returnArray = await tenantsCollection.find({}).toArray();
+
+    client.close();
+
+    return returnArray;
+  }
+
+  public static async isAdmin(user: GoogleUser) {
+    return user.email.toLowerCase() === 'ellerrbrock.christian@gmail.com';
+  }
+
+  public static async createTenantDatabase(
     createTenant: ICreateTenant
   ): Promise<string> {
     let client: mongo.MongoClient | undefined;
@@ -60,14 +78,14 @@ export class Context {
         !this.versions.includes(createTenant.dbVersion)
       ) {
         const e = {
-          message: `The provided version ${createTenant.dbVersion} does not exist. Available are:\n`
+          message: `The provided version ${createTenant.dbVersion} does not exist. Available are:\n`,
         };
         e.message += this.versions.join(',');
         throw e;
       }
 
       client = await mongo.MongoClient.connect(this.config.url, {
-        useUnifiedTopology: true
+        useUnifiedTopology: true,
       });
       tenantDb = client.db(this.tenantDbSuffix + createTenant.dbName);
 
@@ -103,14 +121,14 @@ export class Context {
     }
   }
 
-  public async dropTenantDatabase(dropTenant: IDropTenant) {
+  public static async dropTenantDatabase(dropTenant: IDropTenant) {
     let client: mongo.MongoClient | undefined;
     let tenantDb: mongo.Db | undefined;
     let adminDb: mongo.Db | undefined;
 
     try {
       client = await mongo.MongoClient.connect(this.config.url, {
-        useUnifiedTopology: true
+        useUnifiedTopology: true,
       });
       tenantDb = client.db(this.tenantDbSuffix + dropTenant.dbName);
       await tenantDb.dropDatabase();
@@ -119,7 +137,7 @@ export class Context {
       const tenantsCollection = adminDb.collection('tenants');
 
       await tenantsCollection.deleteOne({
-        dbName: dropTenant.dbName
+        dbName: dropTenant.dbName,
       });
 
       client.close();
@@ -134,7 +152,13 @@ export class Context {
 
   // #region Private Methods
 
-  private async migrateTenantDatabaseTo(
+  private static async getClient() {
+    return mongo.MongoClient.connect(this.config.url, {
+      useUnifiedTopology: true,
+    });
+  }
+
+  private static async migrateTenantDatabaseTo(
     db: mongo.Db,
     version: string,
     createTenant: ICreateTenant
@@ -149,11 +173,11 @@ export class Context {
         const systemCollection = db.collection('system');
         const dbSystemDatabase = new TenantDbSystemDatabase({
           _id: new mongo.ObjectID(),
-          version
+          version,
         });
         const dbSystemTenant = new TenantDbSystemTenant({
           _id: new mongo.ObjectID(),
-          name: createTenant.name
+          name: createTenant.name,
         });
         await systemCollection.insertMany([dbSystemDatabase, dbSystemTenant]);
 
@@ -168,7 +192,7 @@ export class Context {
           email: createTenant.admin.email,
           firstName: createTenant.admin.firstName,
           lastName: createTenant.admin.lastName,
-          passwordHash: adminPasswordHash
+          passwordHash: adminPasswordHash,
         });
         await usersCollection.insertOne(dbUser);
 
@@ -180,7 +204,7 @@ export class Context {
     }
   }
 
-  private async addTenantToAdminDatabase(
+  private static async addTenantToAdminDatabase(
     db: mongo.Db,
     createTenant: ICreateTenant
   ): Promise<void> {
@@ -188,7 +212,7 @@ export class Context {
     const adminDbTenant = new AdminDbTenant({
       _id: new mongo.ObjectID(),
       dbName: createTenant.dbName,
-      name: createTenant.name
+      name: createTenant.name,
     });
     await tenantsCollection.insertOne(adminDbTenant);
   }

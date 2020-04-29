@@ -1,10 +1,11 @@
 import fetch from 'node-fetch';
 import GoogleAppConfig from './app-config';
+import { GoogleUser } from './object';
 
 export default class {
   public static async verifyAccessToken(
     token: string
-  ): Promise<object | undefined> {
+  ): Promise<GoogleUser | undefined> {
     const url =
       'https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=' + token;
 
@@ -15,16 +16,13 @@ export default class {
 
     const buffer = res.body.read();
     const text = buffer.toString('utf8');
-    const user = JSON.parse(text);
+    const user: GoogleUser = JSON.parse(text);
     if (
       typeof user.aud === 'undefined' ||
       user.aud !== GoogleAppConfig.clientId
     ) {
       return undefined;
     }
-
-    // Inject access_token in user object
-    user.access_token = token;
 
     return user;
   }

@@ -7,6 +7,7 @@ import resolvers from './graphql/resolvers';
 import typeDefs from './graphql/typeDefs';
 
 import { Context, ICreateTenant } from './mongodb/context';
+import { GoogleUser } from './google/object';
 
 const app = express();
 
@@ -44,14 +45,14 @@ const server = new ApolloServer({
   playground: true,
   typeDefs,
   resolvers,
-  context: async ({ req }) => {
+  context: async (input: any) => {
     const notAuthenticated = { user: null };
     try {
-      if (typeof req.headers.authorization !== 'string') {
+      if (typeof input.req.headers.authorization !== 'string') {
         return notAuthenticated;
       }
 
-      const token = req.headers.authorization.split(' ')[1];
+      const token = input.req.headers.authorization.split(' ')[1];
       const user = await GoogleHandler.verifyAccessToken(token);
       return { user };
     } catch (e) {
