@@ -1,17 +1,17 @@
 import mongo from 'mongodb';
-import { DbBase, DbTypes } from '../base';
+import { DbBaseDoc, DbTypes } from '../base';
 
 export interface ITenantDbSystemDatabase {
   _id: mongo.ObjectID;
   version: string;
 }
 
-export class TenantDbSystemDatabase extends DbBase {
+export class TenantDbSystemDatabase extends DbBaseDoc {
   public version: string;
 
   constructor(tenantDbSystemDatabase: ITenantDbSystemDatabase) {
     super({ _id: tenantDbSystemDatabase._id });
-    this.__type = DbTypes.tenantDbSystemDatabase;
+    this.__type = DbTypes.tenantDbSystemDatabaseDoc;
 
     this.version = tenantDbSystemDatabase.version;
   }

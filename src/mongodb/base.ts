@@ -1,23 +1,25 @@
 import mongo from 'mongodb';
 
 export enum DbTypes {
-  dbBase = 'dbBase',
-  adminDbTenant = 'adminDbTenant',
-  tenantDbSystemDatabase = 'tenantDbSystemDatabase',
-  tenantDbSystemTenant = 'tenantDbSystemTenant',
-  tenantDbUser = 'tenantDbUser'
+  dbBaseDoc = 'dbBaseDoc',
+  adminDbTenantDoc = 'adminDbTenantDoc',
+  adminDbSystemDatabaseDoc = 'tenantDbSystemDatabaseDoc',
+
+  tenantDbSystemDatabaseDoc = 'tenantDbSystemDatabaseDoc',
+  tenantDbSystemTenantDoc = 'tenantDbSystemTenantDoc',
+  tenantDbUserDoc = 'tenantDbUserDoc',
 }
 
-export interface IDbBase {
+export interface IDbBaseDoc {
   _id: mongo.ObjectID;
 }
 
-export class DbBase {
+export class DbBaseDoc {
   public _id: mongo.ObjectID;
 
-  public __type: string = DbTypes.dbBase;
+  public __type: string = DbTypes.dbBaseDoc;
 
-  constructor(dbBase: IDbBase) {
+  constructor(dbBase: IDbBaseDoc) {
     this._id = dbBase._id;
   }
 }

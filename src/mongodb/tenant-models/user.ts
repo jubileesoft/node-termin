@@ -1,5 +1,5 @@
 import mongo from 'mongodb';
-import { DbBase, DbTypes } from '../base';
+import { DbBaseDoc, DbTypes } from '../base';
 
 export interface ITenantDbUser {
   _id: mongo.ObjectID;
@@ -9,7 +9,7 @@ export interface ITenantDbUser {
   passwordHash: string;
 }
 
-export class TenantDbUser extends DbBase {
+export class TenantDbUser extends DbBaseDoc {
   public email: string;
   public firstName: string | undefined;
   public lastName: string | undefined;
@@ -17,7 +17,7 @@ export class TenantDbUser extends DbBase {
 
   constructor(tenantDbUser: ITenantDbUser) {
     super({ _id: tenantDbUser._id });
-    this.__type = DbTypes.tenantDbUser;
+    this.__type = DbTypes.tenantDbUserDoc;
 
     this.email = tenantDbUser.email;
     this.firstName = tenantDbUser.firstName;

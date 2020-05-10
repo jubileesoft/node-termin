@@ -6,8 +6,7 @@ import GoogleHandler from './google/handler';
 import resolvers from './graphql/resolvers';
 import typeDefs from './graphql/typeDefs';
 
-import { Context, ICreateTenant } from './mongodb/context';
-import { GoogleUser } from './google/object';
+import MongoApi from './datasources/mongo-api';
 
 const app = express();
 
@@ -59,6 +58,9 @@ const server = new ApolloServer({
       return notAuthenticated;
     }
   },
+  // dataSources: () => {
+  //   return { mongoApi: new MongoApi() };
+  // },
 });
 
 server.applyMiddleware({ app });
