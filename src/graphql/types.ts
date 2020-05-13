@@ -3,3 +3,8 @@ export interface CreateTenantInput {
   adminEmail: string;
   dbName: string;
 }
+
+export interface AdminDatabaseInfo {
+  version: string;
+  createdAt: string;
+}

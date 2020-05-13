@@ -8,6 +8,11 @@ const typeDefs = gql`
     dbName: String
   }
 
+  type AdminDatabaseInfo {
+    version: String
+    createdAt: String
+  }
+
   input CreateTenantInput {
     name: String
     adminEmail: String
@@ -15,6 +20,7 @@ const typeDefs = gql`
   }
 
   type Query {
+    getAdminDatabaseInfo: AdminDatabaseInfo
     getAllTenants: [Tenant]
   }
 

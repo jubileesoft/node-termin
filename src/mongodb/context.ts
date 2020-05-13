@@ -9,6 +9,7 @@ import { AdminDbTenant, IAdminDbTenant } from './admin-database/tenant';
 import { GoogleUser } from 'src/google/object';
 import { AdminDbSystemDatabaseDoc } from './admin-database/system-database-doc';
 import { DbTypes } from './base';
+import { AdminDatabaseInfo } from 'src/graphql/types';
 
 export interface ICreateTenantUser {
   email: string;
@@ -53,6 +54,32 @@ export class Context {
   // #endregion Constructor
 
   // #region Public Methods
+
+  public static async getAdminDatabaseInfo(): Promise<AdminDatabaseInfo | undefined> {
+    let client: mongo.MongoClient | undefined;
+    try {
+      client = await this.getClient();
+      const adminDb = client.db(this.adminDb);
+
+      const doc: AdminDbSystemDatabaseDoc | null = await adminDb
+        .collection('system')
+        .findOne({ __type: DbTypes.adminDbSystemDatabaseDoc });
+
+      if(!doc) {
+        return undefined;
+      }
+
+      const adminDatabaseInfo: AdminDatabaseInfo = {
+        version: doc.version,
+        createdAt: new Date(doc.createdAt).toISOString();
+      }
+      client.close();
+      return adminDatabaseInfo;
+    } catch (error) {
+      client?.close();
+      throw error;
+    }
+  }
 
   public static async createAdminDatabase(): Promise<string> {
     let client: mongo.MongoClient | undefined;
