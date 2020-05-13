@@ -3,7 +3,7 @@ import mongo from 'mongodb';
 export enum DbTypes {
   dbBaseDoc = 'dbBaseDoc',
   adminDbTenantDoc = 'adminDbTenantDoc',
-  adminDbSystemDatabaseDoc = 'tenantDbSystemDatabaseDoc',
+  adminDbSystemDatabaseDoc = 'adminDbSystemDatabaseDoc',
 
   tenantDbSystemDatabaseDoc = 'tenantDbSystemDatabaseDoc',
   tenantDbSystemTenantDoc = 'tenantDbSystemTenantDoc',

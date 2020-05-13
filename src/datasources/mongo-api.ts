@@ -11,8 +11,8 @@ export default class MongoApi extends DataSource {
 
   // #region Public Methods
 
-  public async createAdminDatabase() {
-    await MongoContext.createAdminDatabase();
+  public async createAdminDatabase(): Promise<string> {
+    return await MongoContext.createAdminDatabase();
   }
 
   // #endregion Public Methods

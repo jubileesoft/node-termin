@@ -8,6 +8,7 @@ import { TenantDbUser } from './tenant-models/user';
 import { AdminDbTenant, IAdminDbTenant } from './admin-database/tenant';
 import { GoogleUser } from 'src/google/object';
 import { AdminDbSystemDatabaseDoc } from './admin-database/system-database-doc';
+import { DbTypes } from './base';
 
 export interface ICreateTenantUser {
   email: string;
@@ -53,23 +54,34 @@ export class Context {
 
   // #region Public Methods
 
-  public static async createAdminDatabase(): Promise<void> {
+  public static async createAdminDatabase(): Promise<string> {
     let client: mongo.MongoClient | undefined;
 
     try {
       client = await this.getClient();
       const adminDb = client.db(this.adminDb);
 
-      for (const version of this.adminDbVersions) {
-        const result = await this.migreateAdminDatabaseTo(adminDb, version);
+      // Check if a database already exists
+      const doc: AdminDbSystemDatabaseDoc | null = await adminDb
+        .collection('system')
+        .findOne({ __type: DbTypes.adminDbSystemDatabaseDoc });
 
+      if (doc) {
+        client.close();
+        return `Database already exists in version ${doc.version}.`;
+      }
+
+      // The admin database does not exist. Continue.
+      for (const version of this.adminDbVersions) {
+        const ignored = await this.migreateAdminDatabaseTo(adminDb, version);
         // For now ignore the result
       }
 
       client.close();
+      return 'Ok.';
     } catch (error) {
       client?.close();
-      console.error(error.message);
+
       throw error;
     }
   }

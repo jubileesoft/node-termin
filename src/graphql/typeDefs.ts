@@ -19,7 +19,7 @@ const typeDefs = gql`
   }
 
   type Mutation {
-    createAdminDatabase: Boolean
+    createAdminDatabase: String
     createTenant(input: CreateTenantInput): Tenant
   }
 `;

@@ -3,6 +3,7 @@ import { Context } from '../mongodb/context';
 import MongoApi from '../datasources/mongo-api';
 import { CreateTenantInput } from './types';
 import { GoogleUser } from '../google/object';
+import { AuthenticationError } from 'apollo-server-express';
 
 interface ApolloServerContext {
   dataSources: { mongoApi: MongoApi };
@@ -23,10 +24,9 @@ const resolvers: IResolvers = {
   Mutation: {
     createAdminDatabase: async (_, __, context: ApolloServerContext) => {
       if (!context.user || !Context.isAdmin(context.user)) {
-        return null;
+        throw new AuthenticationError('Insufficient rights.');
       }
-      await context.dataSources.mongoApi.createAdminDatabase();
-      return true;
+      return await context.dataSources.mongoApi.createAdminDatabase();
     },
 
     createTenant: async (

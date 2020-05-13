@@ -58,9 +58,9 @@ const server = new ApolloServer({
       return notAuthenticated;
     }
   },
-  // dataSources: () => {
-  //   return { mongoApi: new MongoApi() };
-  // },
+  dataSources: () => {
+    return { mongoApi: new MongoApi() };
+  },
 });
 
 server.applyMiddleware({ app });
