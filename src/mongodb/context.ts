@@ -55,7 +55,9 @@ export class Context {
 
   // #region Public Methods
 
-  public static async getAdminDatabaseInfo(): Promise<AdminDatabaseInfo | undefined> {
+  public static async getAdminDatabaseInfo(): Promise<
+    AdminDatabaseInfo | undefined
+  > {
     let client: mongo.MongoClient | undefined;
     try {
       client = await this.getClient();
@@ -65,14 +67,15 @@ export class Context {
         .collection('system')
         .findOne({ __type: DbTypes.adminDbSystemDatabaseDoc });
 
-      if(!doc) {
+      if (!doc) {
         return undefined;
       }
 
       const adminDatabaseInfo: AdminDatabaseInfo = {
+        id: doc._id.toString(),
         version: doc.version,
-        createdAt: new Date(doc.createdAt).toISOString();
-      }
+        createdAt: new Date(doc.createdAt).toISOString(),
+      };
       client.close();
       return adminDatabaseInfo;
     } catch (error) {
@@ -81,7 +84,7 @@ export class Context {
     }
   }
 
-  public static async createAdminDatabase(): Promise<string> {
+  public static async createAdminDatabase(): Promise<AdminDatabaseInfo | null> {
     let client: mongo.MongoClient | undefined;
 
     try {
@@ -89,13 +92,13 @@ export class Context {
       const adminDb = client.db(this.adminDb);
 
       // Check if a database already exists
-      const doc: AdminDbSystemDatabaseDoc | null = await adminDb
+      let doc: AdminDbSystemDatabaseDoc | null = await adminDb
         .collection('system')
         .findOne({ __type: DbTypes.adminDbSystemDatabaseDoc });
 
       if (doc) {
         client.close();
-        return `Database already exists in version ${doc.version}.`;
+        return null;
       }
 
       // The admin database does not exist. Continue.
@@ -104,11 +107,24 @@ export class Context {
         // For now ignore the result
       }
 
+      doc = await adminDb
+        .collection('system')
+        .findOne({ __type: DbTypes.adminDbSystemDatabaseDoc });
+
       client.close();
-      return 'Ok.';
+
+      if (!doc) {
+        return null;
+      }
+
+      const adminDatabaseInfo: AdminDatabaseInfo = {
+        id: doc._id.toString(),
+        version: doc.version,
+        createdAt: new Date(doc.createdAt).toISOString(),
+      };
+      return adminDatabaseInfo;
     } catch (error) {
       client?.close();
-
       throw error;
     }
   }
@@ -141,7 +157,9 @@ export class Context {
     const adminDb = client.db(this.adminDb);
     const tenantsCollection = adminDb.collection('tenants');
 
-    const returnArray = await tenantsCollection.find({}).toArray();
+    const returnArray: AdminDbTenant[] = await tenantsCollection
+      .find({})
+      .toArray();
 
     client.close();
 

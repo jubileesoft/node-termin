@@ -5,6 +5,7 @@ export interface CreateTenantInput {
 }
 
 export interface AdminDatabaseInfo {
+  id: string;
   version: string;
   createdAt: string;
 }

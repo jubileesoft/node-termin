@@ -1,14 +1,29 @@
 const { gql } = require('apollo-server-express');
 
 const typeDefs = gql`
+  type User {
+    id: ID!
+    email: String
+    //adminTenants: [Tenant]
+    //agentTenants: [Tenant]
+  }
+
+  type TenantConfig {
+    id: ID!
+    tenantId: String!
+    admin: User!
+    agents: [User]
+  }
+
   type Tenant {
-    _id: ID
-    name: String
-    adminEmail: String
-    dbName: String
+    id: ID!
+    name: String!
+    dbName: String!
+    config: TenantConfig
   }
 
   type AdminDatabaseInfo {
+    id: ID!
     version: String
     createdAt: String
   }
@@ -25,7 +40,7 @@ const typeDefs = gql`
   }
 
   type Mutation {
-    createAdminDatabase: String
+    createAdminDatabase: AdminDatabaseInfo
     createTenant(input: CreateTenantInput): Tenant
   }
 `;
