@@ -2,8 +2,11 @@ import mongo from 'mongodb';
 
 export enum DbTypes {
   dbBaseDoc = 'dbBaseDoc',
-  adminDbTenantDoc = 'adminDbTenantDoc',
+
   adminDbSystemDatabaseDoc = 'adminDbSystemDatabaseDoc',
+  adminDbUserDoc = 'adminDbUserDoc',
+  adminDbTenantDoc = 'adminDbTenantDoc',
+  adminDbTenantConfigDoc = 'adminDbTenantConfigDoc',
 
   tenantDbSystemDatabaseDoc = 'tenantDbSystemDatabaseDoc',
   tenantDbSystemTenantDoc = 'tenantDbSystemTenantDoc',

@@ -4,8 +4,6 @@ const typeDefs = gql`
   type User {
     id: ID!
     email: String
-    //adminTenants: [Tenant]
-    //agentTenants: [Tenant]
   }
 
   type TenantConfig {
@@ -18,7 +16,7 @@ const typeDefs = gql`
   type Tenant {
     id: ID!
     name: String!
-    dbName: String!
+    short: String!
     config: TenantConfig
   }
 
@@ -30,8 +28,8 @@ const typeDefs = gql`
 
   input CreateTenantInput {
     name: String
+    short: String
     adminEmail: String
-    dbName: String
   }
 
   type Query {

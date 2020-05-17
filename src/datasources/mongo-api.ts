@@ -1,7 +1,11 @@
 import { DataSource } from 'apollo-datasource';
 import { GoogleUser } from '../google/object';
 import { Context as MongoContext } from '../mongodb/context';
-import { AdminDatabaseInfo } from '../graphql/types';
+import {
+  AdminDatabaseInfo,
+  CreateTenantInput,
+  TenantFull,
+} from '../graphql/types';
 
 export default class MongoApi extends DataSource {
   public context!: { user: GoogleUser };
@@ -18,6 +22,12 @@ export default class MongoApi extends DataSource {
 
   public async getAdminDatabaseInfo(): Promise<AdminDatabaseInfo | undefined> {
     return await MongoContext.getAdminDatabaseInfo();
+  }
+
+  public async createTenant(
+    input: CreateTenantInput
+  ): Promise<TenantFull | null> {
+    return await MongoContext.createTenant(input);
   }
 
   // #endregion Public Methods

@@ -3,26 +3,26 @@ import mongo from 'mongodb';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcrypt';
 import { TenantDbSystemTenant } from './tenant-models/system-tenant';
-import { TenantDbSystemDatabase } from './tenant-models/system-database';
+import {
+  TenantDbSystemDatabaseDoc,
+  ITenantDbSystemDatabaseDoc,
+} from './tenant-models/system-database-doc';
 import { TenantDbUser } from './tenant-models/user';
-import { AdminDbTenant, IAdminDbTenant } from './admin-database/tenant';
+import {
+  AdminDbTenantDoc,
+  IAdminDbTenantDoc,
+} from './admin-database/tenant-doc';
 import { GoogleUser } from 'src/google/object';
 import { AdminDbSystemDatabaseDoc } from './admin-database/system-database-doc';
 import { DbTypes } from './base';
-import { AdminDatabaseInfo } from 'src/graphql/types';
-
-export interface ICreateTenantUser {
-  email: string;
-  firstName?: string;
-  lastName?: string;
-}
-
-export interface ICreateTenant {
-  dbName: string;
-  dbVersion?: string;
-  admin: ICreateTenantUser;
-  name: string;
-}
+import {
+  AdminDatabaseInfo,
+  TenantDatabaseInfo,
+  CreateTenantInput,
+  TenantFull,
+} from 'src/graphql/types';
+import { IAdminDbUserDoc, AdminDbUserDoc } from './admin-database/user-doc';
+import { IAdminDbTenantConfigDoc } from './admin-database/tenant-config-doc';
 
 export interface IDropTenant {
   dbName: string;
@@ -37,7 +37,7 @@ export class Context {
   private static adminDbVersions: string[] = ['1.0'];
 
   private static tenantDbSuffix: string = 'appo_';
-  private static versions: string[] = ['1.0'];
+  private static tenantDbVersions: string[] = ['1.0'];
 
   // #endregion Fields
 
@@ -103,7 +103,7 @@ export class Context {
 
       // The admin database does not exist. Continue.
       for (const version of this.adminDbVersions) {
-        const ignored = await this.migreateAdminDatabaseTo(adminDb, version);
+        const ignored = await this.migrateAdminDatabaseTo(adminDb, version);
         // For now ignore the result
       }
 
@@ -129,7 +129,7 @@ export class Context {
     }
   }
 
-  private static async migreateAdminDatabaseTo(
+  private static async migrateAdminDatabaseTo(
     adminDb: mongo.Db,
     version: string
   ): Promise<void> {
@@ -151,13 +151,116 @@ export class Context {
     }
   }
 
+  public static async createTenant(
+    input: CreateTenantInput
+  ): Promise<TenantFull | null> {
+    let client: mongo.MongoClient | undefined;
+    let tenantDb: mongo.Db | undefined;
+    let adminDb: mongo.Db | undefined;
+    try {
+      client = await this.getClient();
+      adminDb = client.db(this.adminDb);
+      tenantDb = client.db(this.tenantDbSuffix + input.short);
+
+      let doc: ITenantDbSystemDatabaseDoc | null = await tenantDb
+        .collection('system')
+        .findOne({ __type: DbTypes.tenantDbSystemDatabaseDoc });
+
+      if (doc) {
+        client.close();
+        return null;
+      }
+
+      // The tenant database does not exist. Continue.
+      for (const version of this.tenantDbVersions) {
+        const ignored = await this.migrateTenantDatabaseTo(tenantDb, version);
+        // For now ignore the result
+      }
+
+      // Create or get user
+      let userDoc: IAdminDbUserDoc | null = await tenantDb
+        .collection('users')
+        .findOne({
+          email: input.adminEmail.toLowerCase(),
+          __type: DbTypes.tenantDbUserDoc,
+        });
+      if (!userDoc) {
+        // Create user
+        userDoc = new AdminDbUserDoc({
+          _id: new mongo.ObjectID(),
+          email: input.adminEmail.toLowerCase(),
+        });
+        const usersCollection = adminDb.collection('users');
+        await usersCollection.insertOne(userDoc);
+      }
+
+      // Create tenant entry in admin database
+      const tenantDoc = new AdminDbTenantDoc({
+        _id: new mongo.ObjectID(),
+        name: input.name,
+        short: input.short,
+      });
+      const tenantsCollection = adminDb.collection('tenants');
+      await tenantsCollection.insertOne(tenantDoc);
+
+      // Create tenantConfig entry in admin database
+      const tenantConfigDoc: IAdminDbTenantConfigDoc = {
+        _id: new mongo.ObjectID(),
+        tenant_id: tenantDoc._id,
+        admin_id: userDoc._id,
+        agent_ids: [],
+      };
+
+      const gqlTenant: TenantFull = {
+        id: tenantDoc._id.toString(),
+        name: tenantDoc.name,
+        short: tenantDoc.short,
+        config: {
+          id: tenantConfigDoc._id.toHexString(),
+          admin: {
+            id: userDoc._id.toString(),
+            email: userDoc.email,
+          },
+          agents: [],
+        },
+      };
+
+      return gqlTenant;
+    } catch (error) {
+      throw error;
+    } finally {
+      client?.close();
+    }
+  }
+
+  private static async migrateTenantDatabaseTo(
+    tenantDb: mongo.Db,
+    version: string
+  ): Promise<void> {
+    if (!this.tenantDbVersions.includes(version)) {
+      return;
+    }
+    switch (version) {
+      case '1.0':
+        // 1.0 STEP 1: Create collection "system" with database doc
+        const tenantDbSystemDatabaseDoc = new TenantDbSystemDatabaseDoc({
+          _id: new mongo.ObjectID(),
+          version,
+          createdAt: new Date(),
+        });
+        const systemCollection = tenantDb.collection('system');
+        await systemCollection.insertOne(tenantDbSystemDatabaseDoc);
+        break;
+    }
+  }
+
   public static async getAllTenants() {
     const client = await this.getClient();
 
     const adminDb = client.db(this.adminDb);
     const tenantsCollection = adminDb.collection('tenants');
 
-    const returnArray: AdminDbTenant[] = await tenantsCollection
+    const returnArray: IAdminDbTenantDoc[] = await tenantsCollection
       .find({})
       .toArray();
 

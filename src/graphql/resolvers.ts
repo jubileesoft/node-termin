@@ -31,15 +31,21 @@ const resolvers: IResolvers = {
       return await context.dataSources.mongoApi.getAdminDatabaseInfo();
     },
 
-    getAllTenants: async (parent, args, context, info) => {
-      if (!context.user || !Context.isAdmin(context.user)) {
-        return null;
-      }
+    // getAllTenants: async (
+    //   _,
+    //   args: { input: CreateTenantInput },
+    //   context: ApolloServerContext,
+    //   info
+    // ) => {
+    //   ensureIsAuthenticated(context);
 
-      return await Context.getAllTenants();
-      return [];
-    },
+    //   const tenants = await context.dataSources.mongoApi.createTenant(
+    //     args.input
+    //   );
+    //   return [];
+    // },
   },
+
   Mutation: {
     createAdminDatabase: async (_, __, context: ApolloServerContext) => {
       ensureIsAuthenticated(context);
@@ -51,10 +57,15 @@ const resolvers: IResolvers = {
     createTenant: async (
       _,
       args: { input: CreateTenantInput },
-      context: { dataSources: any }
+      context: ApolloServerContext,
+      info
     ) => {
-      console.log(args.input);
-      console.log(context);
+      ensureIsAuthenticated(context);
+
+      const tenant = await context.dataSources.mongoApi.createTenant(
+        args.input
+      );
+      return tenant;
     },
   },
 };
