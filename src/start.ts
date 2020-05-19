@@ -7,11 +7,11 @@ import resolvers from './graphql/resolvers';
 import typeDefs from './graphql/typeDefs';
 
 import MongoApi from './datasources/mongo-api';
-
+import { Amsel, AmselGoogleUser, AmselGoogleConfig } from '@jubileesoft/amsel';
 const app = express();
 
 // const port = process.env.PORT || 3000;
-// app.get('/admin/create/tenant/:id', async (req, res) => {
+// app.get('/admin/creatsere/tenant/:id', async (req, res) => {
 //   const dbName = req.params.id;
 //   const context = new Context();
 
@@ -40,6 +40,11 @@ const app = express();
 //   //
 // });
 
+const amselConfig: AmselGoogleConfig = {
+  appClientId: '',
+};
+Amsel.initializeGoogle(amselConfig);
+
 const server = new ApolloServer({
   playground: true,
   typeDefs,
@@ -47,12 +52,15 @@ const server = new ApolloServer({
   context: async (input: any) => {
     const notAuthenticated = { user: null };
     try {
-      if (typeof input.req.headers.authorization !== 'string') {
-        return notAuthenticated;
-      }
+      // if (typeof input.req.headers.authorization !== 'string') {
+      //   return notAuthenticated;
+      // }
 
-      const token = input.req.headers.authorization.split(' ')[1];
-      const user = await GoogleHandler.verifyAccessToken(token);
+      // const token = input.req.headers.authorization.split(' ')[1];
+      // const user = await GoogleHandler.verifyAccessToken(token);
+      const user = await Amsel.verifyAccessTokenFromGoogle(
+        input.req.headers.authorization
+      );
       return { user };
     } catch (e) {
       return notAuthenticated;
